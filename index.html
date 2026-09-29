@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CYBERPUNK ARENA • Interactive 3D Seat & Venue Selection Engine</title>
+  <meta name="description" content="Experience real-time interactive 3D seat selection with first-person POV sightline simulation, dynamic concert lighting, and fluid motion choreography.">
+  
+  <!-- Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <!-- 3D Canvas Canvas Mount -->
+  <div id="canvas-container"></div>
+
+  <!-- Screen Space Projected 3D HUD (Section Markers, POV indicators) -->
+  <div id="hud-layer" class="hud-layer"></div>
+
+  <!-- Top Navigation Bar -->
+  <header class="app-header glass-panel">
+    <div class="header-left">
+      <div class="event-badge">
+        <span class="live-pulse"></span>
+        <span class="badge-text">LIVE 3D VENUE</span>
+      </div>
+      <div class="event-meta">
+        <h1 class="event-title">METROPOLIS COLISEUM</h1>
+        <p class="event-subtitle">NEO-TOKYO SYMPHONY • WORLD TOUR 2026</p>
+      </div>
+    </div>
+
+    <!-- Center View Angle Quick Switcher -->
+    <div class="header-center">
+      <nav class="view-switcher" id="view-switcher">
+        <button class="view-btn active" data-view="overview" id="btn-view-overview" title="Global 3D Overview">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+          Arena Overview
+        </button>
+        <button class="view-btn" data-view="stage" id="btn-view-stage" title="Stage Front View">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          Center Stage
+        </button>
+        <button class="view-btn" data-view="vip" id="btn-view-vip" title="VIP Mezzanine">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          VIP Lounge
+        </button>
+      </nav>
+    </div>
+
+    <!-- Atmosphere & Sound Controls -->
+    <div class="header-right">
+      <button class="control-icon-btn" id="btn-atmosphere" title="Toggle Stage Show Lighting">
+        <span class="btn-icon">⚡</span>
+        <span class="btn-text">Show Lights</span>
+      </button>
+      <button class="control-icon-btn" id="btn-reset-cam" title="Reset Camera View">
+        <span class="btn-icon">↺</span>
+        <span class="btn-text">Reset Cam</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- First-Person Seat POV Floating Overlay (Visible when viewing from a specific seat) -->
+  <aside class="pov-overlay hidden" id="pov-overlay">
+    <div class="pov-card glass-panel">
+      <div class="pov-badge">
+        <span class="pov-eye">👁</span>
+        <span>SEAT POV SIMULATOR</span>
+      </div>
+      <div class="pov-details">
+        <h3 id="pov-seat-label">Section 102 • Row C • Seat 14</h3>
+        <div class="sightline-metrics">
+          <div class="metric">
+            <span class="metric-label">Stage Distance</span>
+            <span class="metric-val" id="pov-distance">24.5 m</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Direct Sightline</span>
+            <span class="metric-val highlight" id="pov-sightline">98% Direct</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Elevation Angle</span>
+            <span class="metric-val" id="pov-elevation">+14°</span>
+          </div>
+        </div>
+        <p class="pov-drag-hint">↔ Drag anywhere on arena to look around 360°</p>
+      </div>
+      <button class="exit-pov-btn" id="btn-exit-pov">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Exit Seat View
+      </button>
+    </div>
+  </aside>
+
+  <!-- Left Sidebar: Filter Bar & Tier Selection -->
+  <aside class="left-panel glass-panel" id="filter-panel">
+    <div class="panel-section-title">
+      <span>SEAT TIERS & SECTORS</span>
+      <span class="info-tag" id="available-seats-count">180 Available</span>
+    </div>
+
+    <!-- Tier Filter Badges -->
+    <div class="tier-list" id="tier-list">
+      <button class="tier-item active" data-tier="all">
+        <span class="tier-color all"></span>
+        <span class="tier-name">All Tiers</span>
+        <span class="tier-price">From $85</span>
+      </button>
+      <button class="tier-item" data-tier="vip">
+        <span class="tier-color vip"></span>
+        <span class="tier-name">VIP Diamond</span>
+        <span class="tier-price">$350</span>
+      </button>
+      <button class="tier-item" data-tier="premium">
+        <span class="tier-color premium"></span>
+        <span class="tier-name">Premium Lower</span>
+        <span class="tier-price">$195</span>
+      </button>
+      <button class="tier-item" data-tier="pit">
+        <span class="tier-color pit"></span>
+        <span class="tier-name">Floor GA Pit</span>
+        <span class="tier-price">$145</span>
+      </button>
+      <button class="tier-item" data-tier="standard">
+        <span class="tier-color standard"></span>
+        <span class="tier-name">Upper Balcony</span>
+        <span class="tier-price">$85</span>
+      </button>
+      <div class="legend-status-item">
+        <span class="tier-color booked"></span>
+        <span class="legend-text">Red = Booked / Sold Out</span>
+      </div>
+    </div>
+
+    <!-- Quick Navigation Hints -->
+    <div class="controls-guide">
+      <div class="guide-item">
+        <kbd>Left Drag</kbd>
+        <span>Orbit Arena</span>
+      </div>
+      <div class="guide-item">
+        <kbd>Scroll</kbd>
+        <span>Zoom Camera</span>
+      </div>
+      <div class="guide-item">
+        <kbd>Click Seat</kbd>
+        <span>Select & Enter POV</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Floating Seat Hover Card (Tooltip) -->
+  <div class="seat-tooltip hidden" id="seat-tooltip">
+    <div class="tooltip-header">
+      <span class="tooltip-tier-badge" id="tt-tier">VIP DIAMOND</span>
+      <span class="tooltip-status" id="tt-status">AVAILABLE</span>
+    </div>
+    <div class="tooltip-title" id="tt-title">Sec 102 • Row B • Seat 8</div>
+    <div class="tooltip-stats">
+      <div class="stat-col">
+        <span class="stat-label">Sightline</span>
+        <span class="stat-value" id="tt-sightline">99%</span>
+      </div>
+      <div class="stat-col">
+        <span class="stat-label">Distance</span>
+        <span class="stat-value" id="tt-distance">18m</span>
+      </div>
+      <div class="stat-col">
+        <span class="stat-label">Price</span>
+        <span class="stat-value price" id="tt-price">$350</span>
+      </div>
+    </div>
+    <div class="tooltip-hint">Click to select & experience POV</div>
+  </div>
+
+  <!-- Bottom Drawer: Selected Seats & Booking Cart -->
+  <footer class="booking-drawer glass-panel" id="booking-drawer">
+    <div class="drawer-content">
+      <div class="cart-info">
+        <div class="cart-count-badge" id="cart-count">0</div>
+        <div class="cart-text">
+          <span class="cart-label">Selected Seats</span>
+          <div class="selected-seats-pills" id="selected-seats-pills">
+            <span class="no-selection-hint">Click any available 3D seat to add to your order</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cart-checkout-actions">
+        <div class="total-price-box">
+          <span class="total-label">Estimated Total</span>
+          <span class="total-amount" id="total-price">$0</span>
+        </div>
+        <button class="checkout-btn" id="btn-checkout" disabled>
+          <span>Continue to Booking</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Checkout / Ticket Pass Modal -->
+  <div class="modal-backdrop hidden" id="checkout-modal">
+    <div class="checkout-modal-card glass-panel">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="ticket-icon">🎟</span>
+          <h2>RESERVATION CONFIRMATION</h2>
+        </div>
+        <button class="close-modal-btn" id="btn-close-modal">✕</button>
+      </div>
+
+      <div class="ticket-preview-container" id="ticket-list">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="modal-summary">
+        <div class="summary-row">
+          <span>Subtotal</span>
+          <span id="modal-subtotal">$0</span>
+        </div>
+        <div class="summary-row">
+          <span>Facility & 3D Tech Fee</span>
+          <span>$12.50</span>
+        </div>
+        <div class="summary-row grand-total">
+          <span>Total Billed</span>
+          <span id="modal-grand-total">$0</span>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="confirm-booking-btn" id="btn-confirm-order">
+          <span>Confirm & Issue Digital Passes</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
